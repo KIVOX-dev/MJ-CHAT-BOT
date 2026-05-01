@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REM AI Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                     <i class="ph-fill ph-brain"></i>
+                     <span>REM AI</span>
+                </div>
+                <button class="new-chat-btn" title="New Session"><i class="ph ph-plus"></i></button>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="section-title">Navigation</span>
+                <ul class="nav-tabs">
+                    <li class="tab-btn active" data-target="chat-view"><i class="ph-fill ph-chat-circle-dots"></i> AI Interface</li>
+                    <li class="tab-btn" data-target="dash-view"><i class="ph-fill ph-chart-line-up"></i> Learning Dashboard</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="section-title">Recent Research</span>
+                <ul class="session-list" id="session-history-list">
+                    <!-- Session IDs will be injected here -->
+                    <li class="session-item active">Current Session</li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <span class="section-title">Active Modules</span>
+                <ul class="module-list">
+                    <li><i class="ph ph-database"></i> Augmented Memory</li>
+                    <li><i class="ph ph-brain"></i> BERT Ensemble</li>
+                    <li><i class="ph ph-function"></i> SymPy Math Engine</li>
+                    <li><i class="ph ph-globe"></i> Research Modules</li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar user-avatar">U</div>
+                    <span>REM Admin</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="content-area active" id="chat-view">
+            <header class="app-header">
+                <h2>REM Autonomous Session</h2>
+                <div class="header-badges" id="app-header-badges">
+                    <span class="badge badge-ollama" id="ai-status-badge"><i class="ph-fill ph-lightning"></i> Ollama (phi3) • Ready</span>
+                    <span class="badge badge-math"><i class="ph-fill ph-check-circle"></i> REM Memory Online</span>
+                </div>
+            </header>
+
+            <div class="chat-history">
+                <!-- Initial Welcome Message -->
+                <div class="message ai-message">
+                    <div class="avatar ai-avatar"><i class="ph-fill ph-brain"></i></div>
+                    <div class="message-content">
+                        <p>Welcome to <strong>REM AI</strong>. My internal memory, math tools, and web modules are online. What would you like to investigate today?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Box -->
+            <div class="chat-input-wrapper">
+                <div class="chat-input-container">
+                    <button class="attach-btn"><i class="ph ph-paperclip"></i></button>
+                    <input type="text" placeholder="Message REM AI or type a math equation..." class="chat-input">
+                    <button class="send-btn"><i class="ph-fill ph-paper-plane-right"></i></button>
+                </div>
+                <div class="disclaimer">REM AI actively checks PyTorch, Web Tools, and SymPy before resolving context with Gemini.</div>
+            </div>
+        </main>
+
+        <!-- Dashboard Area -->
+        <main class="content-area" id="dash-view" style="display: none;">
+             <header class="app-header">
+                <h2>Live Intelligence Overview</h2>
+                <div class="header-badges">
+                    <span class="badge badge-math"><i class="ph-fill ph-broadcast"></i> Polling memory.json (Real-time)</span>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <h3>Total Acquired Memories</h3>
+                        <div class="stat-value" id="stat-total-memory">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Sub-Engines Engaged</h3>
+                        <div class="stat-value">4</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>High-Fidelity Facts</h3>
+                        <div class="stat-value" id="stat-factbook-count" style="color: #4FD1C5;">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3>Knowledge Source Breakdown</h3>
+                        <div class="canvas-wrapper"><canvas id="sourceChart"></canvas></div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Topic Tag Distribution</h3>
+                        <div class="canvas-wrapper"><canvas id="tagChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="charts-row" style="margin-top: 24px;">
+                    <div class="chart-container">
+                        <h3>Timing Improvement (ms)</h3>
+                        <div class="canvas-wrapper"><canvas id="latencyChart"></canvas></div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>System Health / Process ECG</h3>
+                        <div class="canvas-wrapper"><canvas id="ecgChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
