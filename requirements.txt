@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pymongo[srv]==3.12
+torch
+google-genai
+requests
+beautifulsoup4
+python-dotenv
+wikipedia
+duckduckgo-search
+sympy
+ollama
+transformers
+scikit-learn
+flask

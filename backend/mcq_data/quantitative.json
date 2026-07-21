@@ -1,0 +1,57 @@
+[
+  {
+    "question": "What is the sum of -8 and +3?\n(A) -5 (B) 2 (C) -11 (D) -6",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "answer": "A",
+    "explanation": "When you add a negative number to a positive one, subtract the smaller from the larger and keep the sign. So, 8 + 3 = 11; since -8 is greater in absolute value, it's still a negative sum: -11."
+  },
+  {
+    "question": "If you have $50 and spend $23 on groceries, how much money will you have left?\n(A) $7 (B) $27 (C) $23 (D) $8",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "answer": "B",
+    "explanation": "Subtract the amount spent from the initial sum: 50 - 23 = 27, so you'll have $27 left."
+  },
+  {
+    "question": "What is the result of dividing a number by zero?\n(A) Undefined (B) Zero (C) Infinity (D) Error",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "answer": "A",
+    "explanation": "Division of any non-zero number by zero does not produce a result that can be expressed within the set of real numbers, thus it's undefined."
+  },
+  {
+    "question": "What is the sum when you add -7 and +2?\n(A) -5 (B) 5 (C) -9 (D) 3",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "answer": "A",
+    "explanation": "Adding a negative number to a positive one means subtract the smaller from the larger and keep the sign. Thus, |8 - 2| = 6 with the minus because -7 has higher absolute value: -6."
+  },
+  {
+    "question": "Which of these expressions results in an irrational number?\n(A) (\u221a3)^2 + 1 \nB) sin(\u03c0/2)\nC) log\u2081\u2080(0.01) - 2\nD) e^(-1)",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "answer": "D",
+    "explanation": "e is an irrational number, and raising it to the power of negative one doesn't change that. sin(\u03c0/2) equals 1 which is rational; (\u221a3)^2 + 1 simplifies to 4 - this also results in a rational number."
+  }
+]

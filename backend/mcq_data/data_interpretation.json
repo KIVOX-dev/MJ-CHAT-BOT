@@ -1,0 +1,53 @@
+[
+  {
+    "question": "In a bar graph showing the test scores of five students, if student B's score is twice as high as A's and C has scored half as much as D who got '80', what would be B's score?",
+    "options": [
+      "32",
+      "40",
+      "64",
+      "80"
+    ],
+    "answer": "64",
+    "explanation": "If student D scored 80, and C has half of that which is 40. Student B's score being twice as high than A would need to be calculated based on the options provided."
+  },
+  {
+    "question": "A line graph illustrates a population increase from '1000' in year '2000' to '3000' in year '2020'. If this trend continues, what would be the projected population by the end of year 2040?",
+    "options": [
+      "5000",
+      "6000",
+      "7000"
+    ],
+    "answer": "8000",
+    "explanation": "The trend shows an increase of '2000' every decade. If the population continues to grow at this rate, it would be 5000 by 2030 and then another 2000 by end of 2040."
+  },
+  {
+    "question": "A pie chart shows that '60%' of people prefer tea over coffee in a small village. If there are '50' residents, how many would be expected to choose coffee?",
+    "options": [
+      "18",
+      "27",
+      "36"
+    ],
+    "answer": "24",
+    "explanation": "If 60% prefer tea then the remaining 40% must have chosen coffee. Therefore, 40% of '50' residents equals to 20 people."
+  },
+  {
+    "question": "In a set of box plots comparing test scores by classroom A and B where Classroom A has the lower quartile at '70', upper quartile at '90', median value at '85' and no outliers. What can be said about the dispersion in scores for both classes?",
+    "options": [
+      "Classroom A is more variable than class B.",
+      "Both have equal variability.",
+      "The information provided isn\u2019t sufficient to determine this."
+    ],
+    "answer": "The information provided isn\u2019t sufficient to determine this.",
+    "explanation": "To assess the dispersion of scores, we would need data on Classroom B's box plot or additional statistics such as range and standard deviation for either class. Without that comparison point or extra statistical measures from both classes A & B, a conclusion cannot be drawn."
+  },
+  {
+    "question": "A bar graph displays the number of books sold by genre in an independent bookstore over one month: 'Romance' - 250 units, 'Mystery' - not specified. If Romance is twice as popular and Mystery half as much lesser-sold than Non-fiction which recorded '375' units, how many were sold for the Mystery genre?",
+    "options": [
+      "125",
+      "200",
+      "288"
+    ],
+    "answer": "262.5 (since there can be no half unit sales this would round to 263 assuming a non-rounded figure isn't allowed)",
+    "explanation": "Mystery is less popular than Non-fiction by half the difference in units sold between them, which equates to one quarter of Non-fiction\u2019s sales. Since Non-fiction had 375 unit sales and Mystery must have been '262.5' (or if rounded no fractional books can be considered as a whole number such as 263), then the answer is determined by this calculation."
+  }
+]
