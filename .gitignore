@@ -123,5 +123,6 @@ backend/bandit_report.json
 backend/error.log
 backend/server.log
 backend/__pycache__/
-backend/models/model.pth
+backend/models/*.pth
+backend/models/*.joblib
 frontend/redsage_audit_*.md

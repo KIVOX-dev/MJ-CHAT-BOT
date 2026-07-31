@@ -38,7 +38,7 @@ MJ AI operates on a multi-tier hybrid intelligence design:
 ```tree
 MJ_AI/
 ├── backend/                  # Core Service Layer & Neural Engines
-│   ├── models/               # Serialized neural weights (model.pth)
+│   ├── models/               # Serialized neural weights (ensemble_v6.pth, MJ_MODEL_FILENAME)
 │   ├── server.py             # FastAPI REST Server
 │   ├── main.py               # Autonomous reasoning agent loop
 │   ├── memory.py             # Dual-mode local JSON / MongoDB driver

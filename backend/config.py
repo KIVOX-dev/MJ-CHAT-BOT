@@ -11,6 +11,15 @@ MONGO_URI = os.getenv("MONGO_URI", "")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MEMORY_FILE = os.path.join(BASE_DIR, "memory.json")
 
+# Canonical filename for the trained ensemble checkpoint (see learning.py's
+# save()/load()). Single source of truth so the save path and the load path
+# can never drift apart the way models/model.pth (a stale, structurally
+# incompatible checkpoint from an older fc1/fc2 architecture) and the
+# ensemble_v6.pth the loader actually looked for once did. Bump this if the
+# EnsembleBrain architecture changes again in a way that makes old
+# checkpoints incompatible.
+MODEL_FILENAME = os.getenv("MJ_MODEL_FILENAME", "ensemble_v6.pth")
+
 # Model Hyperparameters
 CONFIDENCE_THRESHOLD = 0.90 # Minimum confidence to trust internal model summary
 TRAIN_INTERVAL = 5           # Train model every N new memories

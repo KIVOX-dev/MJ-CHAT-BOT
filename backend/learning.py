@@ -4,6 +4,7 @@ import json
 from collections import Counter
 from typing import List, Dict, Any
 from memory import MemoryLayer
+from config import MODEL_FILENAME
 
 # Lazy loading helpers
 def get_torch():
@@ -51,7 +52,7 @@ class EnsembleBrain:
 class REMLearningSys:
     def __init__(self, model_dir="models"):
         self.model_dir = model_dir
-        self.model_path = os.path.join(model_dir, "ensemble_v6.pth")
+        self.model_path = os.path.join(model_dir, MODEL_FILENAME)
         self.lock = threading.Lock()
         
         # State
