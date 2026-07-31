@@ -13,7 +13,7 @@ def debug_train():
     
     if success:
         print("[+] SUCCESS: Model trained and saved.")
-        print(f"[*] Vocab Size: {len(learn.vocab)}")
+        print(f"[*] Vocab Size: {learn.vocab_size}")
         print(f"[*] Classes: {learn.classes}")
         
         # Test a prediction
