@@ -9,7 +9,23 @@ import {
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import confetti from 'canvas-confetti';
+
+// Chat messages are rendered from LLM output, which can itself be shaped by
+// scraped web content (indirect prompt injection). marked.parse() is a
+// markdown-to-HTML converter, not a sanitizer, so its output must always be
+// passed through DOMPurify before it reaches dangerouslySetInnerHTML.
+function renderSafeMarkdown(rawText) {
+  const html = marked.parse(rawText ?? '');
+  return DOMPurify.sanitize(html, {
+    // DOMPurify's default config already strips <script>, event handlers,
+    // and javascript:/data: URLs. We additionally forbid a few tags/attrs
+    // that have no legitimate use in a formatted chat bubble.
+    FORBID_TAGS: ['style', 'script', 'iframe', 'object', 'embed', 'form', 'input'],
+    FORBID_ATTR: ['style', 'onerror', 'onload'],
+  });
+}
 
 ChartJS.register(
   CategoryScale,
@@ -381,7 +397,7 @@ export default function App() {
                     <div className="message-bubble">
                       <div 
                         className="markdown-content" 
-                        dangerouslySetInnerHTML={{ __html: marked.parse(msg.answer) }}
+                        dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(msg.answer) }}
                       />
 
                       {msg.sender === 'ai' && (msg.source || msg.confidence) && (

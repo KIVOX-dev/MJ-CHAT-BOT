@@ -11,6 +11,7 @@
   "dependencies": {
     "canvas-confetti": "^1.6.0",
     "chart.js": "^4.4.1",
+    "dompurify": "^3.4.12",
     "framer-motion": "^11.0.8",
     "lucide-react": "^0.344.0",
     "marked": "^12.0.0",
