@@ -1,15 +1,54 @@
+import hmac
+
 from fastapi import Depends, FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+
 from main import autonomous_loop
 from auth import get_current_identity
 import os
 import posixpath
-import json
 import uvicorn
 import asyncio
-from typing import Dict
-from config import TRAIN_INTERVAL
+from typing import Optional
+from config import TRAIN_INTERVAL, API_TOKENS, CHAT_RATE_LIMIT_AUTHENTICATED, CHAT_RATE_LIMIT_ANONYMOUS
+
+
+def _resolve_identity_from_request(request: Request) -> Optional[str]:
+    """Best-effort bearer-token -> identity lookup for rate-limit keying.
+
+    Not a substitute for the get_current_identity auth dependency (this
+    never rejects a request) - just lets the limiter charge authenticated
+    callers against their own identity bucket instead of a shared IP bucket.
+    """
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.lower().startswith("bearer "):
+        return None
+    token = auth_header[7:].strip()
+    for known_token, identity in API_TOKENS.items():
+        if hmac.compare_digest(known_token, token):
+            return identity
+    return None
+
+
+def _rate_limit_key(request: Request) -> str:
+    identity = _resolve_identity_from_request(request)
+    return f"identity:{identity}" if identity else f"ip:{get_remote_address(request)}"
+
+
+def _chat_rate_limit(key: str) -> str:
+    """Dynamic per-route limit for /api/chat: generous for a known identity,
+    tighter for anything resolving to a bare IP (unauthenticated/bad token)."""
+    return CHAT_RATE_LIMIT_AUTHENTICATED if key.startswith("identity:") else CHAT_RATE_LIMIT_ANONYMOUS
+
+
+# Baseline limit applied (via SlowAPIMiddleware) to every route that doesn't
+# declare its own @limiter.limit(...) - i.e. everything except /api/chat.
+limiter = Limiter(key_func=_rate_limit_key, default_limits=[CHAT_RATE_LIMIT_ANONYMOUS])
 
 from contextlib import asynccontextmanager
 
@@ -73,6 +112,9 @@ def _safe_static_path(requested_path: str):
     return candidate
 
 app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Track how many new messages since last train
 _new_messages_count = 0
@@ -85,6 +127,7 @@ async def read_index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.post("/api/chat")
+@limiter.limit(_chat_rate_limit)
 async def chat(request: Request, background_tasks: BackgroundTasks, identity: str = Depends(get_current_identity)):
     global _new_messages_count
     data = await request.json()

@@ -13,3 +13,5 @@ ollama
 transformers
 scikit-learn
 flask
+slowapi
+bandit

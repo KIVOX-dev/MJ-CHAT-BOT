@@ -12,3 +12,5 @@ sympy
 ollama
 transformers
 scikit-learn
+slowapi
+bandit

@@ -41,3 +41,10 @@ def _parse_api_tokens(raw: str) -> dict:
 # from this map (see auth.py). Configure via MJ_API_TOKENS, e.g.:
 #   MJ_API_TOKENS=changeme-token-1:alice,changeme-token-2:bob
 API_TOKENS = _parse_api_tokens(os.getenv("MJ_API_TOKENS", ""))
+
+# Rate limits for POST /api/chat (see server.py). Format is a `limits`
+# library string, e.g. "60/minute". The authenticated tier applies once a
+# valid bearer token resolves to an identity; the anonymous tier is the
+# per-IP fallback used by the shared default_limits baseline.
+CHAT_RATE_LIMIT_AUTHENTICATED = os.getenv("MJ_CHAT_RATE_LIMIT_AUTHENTICATED", "60/minute")
+CHAT_RATE_LIMIT_ANONYMOUS = os.getenv("MJ_CHAT_RATE_LIMIT_ANONYMOUS", "10/minute")
