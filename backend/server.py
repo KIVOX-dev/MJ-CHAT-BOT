@@ -1,8 +1,10 @@
 import hmac
 
 from fastapi import Depends, FastAPI, Request, BackgroundTasks
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -16,6 +18,16 @@ import uvicorn
 import asyncio
 from typing import Optional
 from config import TRAIN_INTERVAL, API_TOKENS, CHAT_RATE_LIMIT_AUTHENTICATED, CHAT_RATE_LIMIT_ANONYMOUS
+
+
+class ChatRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=8000, description="The user's message.")
+    session_id: str = Field(default="default", min_length=1, max_length=200)
+
+
+class FeedbackRequest(BaseModel):
+    message_id: str = Field(..., min_length=1, description="id/msg_id returned from a prior /api/chat response.")
+    type: str = Field(..., min_length=1, max_length=32, description="Feedback direction, e.g. 'up' or 'down'.")
 
 
 def _resolve_identity_from_request(request: Request) -> Optional[str]:
@@ -116,6 +128,17 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Keep the app's existing {"error": ...} envelope instead of FastAPI's
+    # default {"detail": [...]}, while still returning the standard 422 and
+    # Pydantic's actual field-level messages.
+    return JSONResponse(
+        {"error": "Invalid request", "details": exc.errors()},
+        status_code=422,
+    )
+
 # Track how many new messages since last train
 _new_messages_count = 0
 
@@ -128,14 +151,12 @@ async def read_index():
 
 @app.post("/api/chat")
 @limiter.limit(_chat_rate_limit)
-async def chat(request: Request, background_tasks: BackgroundTasks, identity: str = Depends(get_current_identity)):
+async def chat(request: Request, payload: ChatRequest, background_tasks: BackgroundTasks, identity: str = Depends(get_current_identity)):
+    # `request: Request` is required here for slowapi's @limiter.limit to
+    # find it - the actual body is validated/parsed via `payload`.
     global _new_messages_count
-    data = await request.json()
-    query = data.get('query', '')
-    session_id = data.get('session_id', 'default')
-
-    if not query:
-        return JSONResponse({"error": "No query provided"}, status_code=400)
+    query = payload.query
+    session_id = payload.session_id
 
     print(f"[FETCH] Received query for session {session_id} (identity={identity}): {query}")
 
@@ -172,18 +193,11 @@ async def get_history(session_id: str, identity: str = Depends(get_current_ident
     return JSONResponse({"history": history})
 
 @app.post("/api/feedback")
-async def feedback(request: Request, identity: str = Depends(get_current_identity)):
-    data = await request.json()
-    msg_id = data.get('message_id')
-    f_type = data.get('type')
-
-    if not msg_id or not f_type:
-        return JSONResponse({"error": "Missing ID or type"}, status_code=400)
-
-    print(f"[FEEDBACK] {msg_id} -> {f_type} (identity={identity})")
+async def feedback(payload: FeedbackRequest, identity: str = Depends(get_current_identity)):
+    print(f"[FEEDBACK] {payload.message_id} -> {payload.type} (identity={identity})")
     from memory import MemoryLayer
     mem = MemoryLayer()
-    success = mem.set_feedback(msg_id, f_type, identity)
+    success = mem.set_feedback(payload.message_id, payload.type, identity)
 
     return JSONResponse({"status": "ok" if success else "error"})
 
