@@ -304,22 +304,18 @@ class MemoryLayer:
             results = []
             verified_results = []
 
-            try:
-                rx = re.compile(query, re.IGNORECASE)
-            except Exception:
-                rx = None
+            # re.escape: `query` is free-text user input, not a pattern the
+            # caller intends as a regex. Without escaping it, characters
+            # like `(`, `*`, `+` either raise on compile or - worse - let a
+            # crafted query cause catastrophic backtracking (ReDoS) against
+            # every stored input (CWE-1333).
+            rx = re.compile(re.escape(query), re.IGNORECASE)
 
             for m in local_data:
                 if not _is_visible_match(m, owner):
                     continue
                 input_val = m.get("input", "")
-                match = False
-                if rx:
-                    match = rx.search(input_val) is not None
-                else:
-                    match = query.lower() in input_val.lower()
-
-                if match:
+                if rx.search(input_val):
                     if "verified-persistent" in m.get("tags", []):
                         verified_results.append(m)
                     else:
@@ -331,13 +327,14 @@ class MemoryLayer:
         if not self.collection: return []
         try:
             visible_filter = _mongo_visible_filter(owner)
+            safe_pattern = re.escape(query)  # see local_mode branch above (CWE-1333 / injection)
 
             # 1. Search regular logs (conversational)
-            regex_query = {"input": {"$regex": query, "$options": "i"}, **visible_filter}
+            regex_query = {"input": {"$regex": safe_pattern, "$options": "i"}, **visible_filter}
             results = list(self.collection.find(regex_query, {"_id": 0}).limit(3))
 
             # 2. Search prioritized knowledge (verified-persistent)
-            verified_query = {"tags": "verified-persistent", "input": {"$regex": query, "$options": "i"}, **visible_filter}
+            verified_query = {"tags": "verified-persistent", "input": {"$regex": safe_pattern, "$options": "i"}, **visible_filter}
             verified_results = list(self.collection.find(verified_query, {"_id": 0}).limit(3))
 
             # Combined, prioritized
