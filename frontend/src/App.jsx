@@ -16,6 +16,31 @@ import confetti from 'canvas-confetti';
 // scraped web content (indirect prompt injection). marked.parse() is a
 // markdown-to-HTML converter, not a sanitizer, so its output must always be
 // passed through DOMPurify before it reaches dangerouslySetInnerHTML.
+// Every /api/* route now requires a bearer token (see backend/auth.py).
+// The token is injected at build time via VITE_MJ_API_TOKEN so it never
+// has to live in source. apiFetch() is a thin fetch wrapper that attaches
+// it and normalizes 401/503 (missing/invalid/unconfigured auth) into a
+// single readable Error instead of a confusing JSON-parse failure.
+const API_TOKEN = import.meta.env.VITE_MJ_API_TOKEN || '';
+
+async function apiFetch(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...(API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {}),
+    },
+  });
+
+  if (response.status === 401) {
+    throw new Error('Authentication failed: missing or invalid API token (set VITE_MJ_API_TOKEN and rebuild).');
+  }
+  if (response.status === 503) {
+    throw new Error('Server auth is not configured (backend needs MJ_API_TOKENS set).');
+  }
+  return response;
+}
+
 function renderSafeMarkdown(rawText) {
   const html = marked.parse(rawText ?? '');
   return DOMPurify.sanitize(html, {
@@ -73,20 +98,26 @@ export default function App() {
 
   const chatEndRef = useRef(null);
 
+  const [authError, setAuthError] = useState(null);
+
   // Fetch metrics & sessions
   const fetchSessionsAndMetrics = async () => {
     try {
-      const resSessions = await fetch('/api/sessions');
+      const resSessions = await apiFetch('/api/sessions');
       const dataSessions = await resSessions.json();
       if (dataSessions.sessions && dataSessions.sessions.length > 0) {
         setSessions(dataSessions.sessions);
       }
-      
-      const resMetrics = await fetch('/api/metrics');
+
+      const resMetrics = await apiFetch('/api/metrics');
       const dataMetrics = await resMetrics.json();
       setMetrics(dataMetrics);
+      setAuthError(null);
     } catch (e) {
       console.error("Error loading backend APIs:", e);
+      if (e.message?.startsWith('Authentication failed') || e.message?.startsWith('Server auth')) {
+        setAuthError(e.message);
+      }
     }
   };
 
@@ -115,7 +146,7 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await apiFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userMessage.answer, session_id: sessionId })
@@ -143,11 +174,15 @@ export default function App() {
         }
       }
     } catch (error) {
+      const isAuthError = error.message?.startsWith('Authentication failed') || error.message?.startsWith('Server auth');
+      if (isAuthError) setAuthError(error.message);
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         sender: 'ai',
-        answer: "⚠️ **Connection Error**: Failed to reach the MJ AI backend engine.",
-        source: "Connection Module"
+        answer: isAuthError
+          ? `⚠️ **${error.message}**`
+          : "⚠️ **Connection Error**: Failed to reach the MJ AI backend engine.",
+        source: isAuthError ? "Auth" : "Connection Module"
       }]);
     } finally {
       setIsLoading(false);
@@ -199,7 +234,13 @@ export default function App() {
 
   return (
     <div className="app-container">
-      
+
+      {authError && (
+        <div className="auth-error-banner" role="alert">
+          <AlertCircle style={{ width: '14px', height: '14px' }} /> {authError}
+        </div>
+      )}
+
       {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div>

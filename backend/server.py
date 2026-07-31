@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
+from fastapi import Depends, FastAPI, Request, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from main import autonomous_loop
+from auth import get_current_identity
 import os
 import posixpath
 import json
@@ -84,20 +85,20 @@ async def read_index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.post("/api/chat")
-async def chat(request: Request, background_tasks: BackgroundTasks):
+async def chat(request: Request, background_tasks: BackgroundTasks, identity: str = Depends(get_current_identity)):
     global _new_messages_count
     data = await request.json()
     query = data.get('query', '')
     session_id = data.get('session_id', 'default')
-    
+
     if not query:
         return JSONResponse({"error": "No query provided"}, status_code=400)
-    
-    print(f"[FETCH] Received query for session {session_id}: {query}")
-    
+
+    print(f"[FETCH] Received query for session {session_id} (identity={identity}): {query}")
+
     try:
         # Prevent the sync loop from blocking the FastAPI event loop
-        result = await asyncio.to_thread(autonomous_loop, query, session_id)
+        result = await asyncio.to_thread(autonomous_loop, query, session_id, identity)
         
         # Increment counter and trigger background train if needed
         _new_messages_count += 1
@@ -114,40 +115,40 @@ async def chat(request: Request, background_tasks: BackgroundTasks):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/api/sessions")
-async def list_sessions():
+async def list_sessions(identity: str = Depends(get_current_identity)):
     from memory import MemoryLayer
     mem = MemoryLayer()
-    sessions = mem.list_sessions()
+    sessions = mem.list_sessions(identity)
     return JSONResponse({"sessions": sessions})
 
 @app.get("/api/history/{session_id}")
-async def get_history(session_id: str):
+async def get_history(session_id: str, identity: str = Depends(get_current_identity)):
     from memory import MemoryLayer
     mem = MemoryLayer()
-    history = mem.get_session_history(session_id)
+    history = mem.get_session_history(session_id, identity)
     return JSONResponse({"history": history})
 
 @app.post("/api/feedback")
-async def feedback(request: Request):
+async def feedback(request: Request, identity: str = Depends(get_current_identity)):
     data = await request.json()
     msg_id = data.get('message_id')
     f_type = data.get('type')
-    
+
     if not msg_id or not f_type:
         return JSONResponse({"error": "Missing ID or type"}, status_code=400)
-        
-    print(f"[FEEDBACK] {msg_id} -> {f_type}")
+
+    print(f"[FEEDBACK] {msg_id} -> {f_type} (identity={identity})")
     from memory import MemoryLayer
     mem = MemoryLayer()
-    success = mem.set_feedback(msg_id, f_type)
-    
+    success = mem.set_feedback(msg_id, f_type, identity)
+
     return JSONResponse({"status": "ok" if success else "error"})
 
 @app.get("/api/metrics")
-async def metrics():
+async def metrics(identity: str = Depends(get_current_identity)):
     from memory import MemoryLayer
     memory_sys = MemoryLayer()
-    data = memory_sys.read_all()
+    data = memory_sys.read_all(identity)
     
     # Initialize categories
     sources = {

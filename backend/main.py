@@ -11,10 +11,16 @@ _memory_sys = MemoryLayer()
 _learning_sys = REMLearningSys()
 _reasoner = ReasoningLayer(learning_sys=_learning_sys)
 
-def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
+def autonomous_loop(user_input: str, session_id: str = "default", owner: str = "default") -> dict:
     """
     Main Autonomous Bridge.
     Connects Input -> Local Learning -> Context History -> Agentic Reasoning -> Memory -> UI
+
+    `owner` is the authenticated caller's identity (see auth.py) and scopes
+    every memory read/write so one identity's sessions and history stay
+    invisible to another (closes the IDOR that used to let any client read
+    any session_id). Defaults to "default" for CLI/script callers that have
+    no auth context - the same shared bucket pre-auth data already lives in.
     """
     start_time = time.time()
     
@@ -40,7 +46,7 @@ def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
     if clean_input in confirmation_map:
         if confirmation_map[clean_input]:
             # Commit
-            success = _memory_sys.confirm_memory(session_id)
+            success = _memory_sys.confirm_memory(session_id, owner)
             if success:
                  return {
                     "answer": "✅ Saved successfully. I will remember this for future sessions.",
@@ -52,7 +58,7 @@ def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
                 }
         else:
             # Reject
-            success = _memory_sys.reject_memory(session_id)
+            success = _memory_sys.reject_memory(session_id, owner)
             return {
                 "answer": "Okay, not saved. I'll keep our future discussions focused on your direct questions.",
                 "source": "Core Logic (Memory Rejection)",
@@ -70,7 +76,7 @@ def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
         }
     
     # 0.1 Fetch History for Context
-    history = _memory_sys.get_session_history(session_id)
+    history = _memory_sys.get_session_history(session_id, owner)
     history_context = ""
     if history:
         history_context = "\n".join([f"User: {m['input']}\nAI: {m['output']}" for m in history[-3:]]) # Last 3 turns
@@ -103,7 +109,7 @@ def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
     
     # 2. Pre-analysis (Math Tool)
     math_result = solve_math(user_input)
-    relevant_mems = _memory_sys.find_relevant(user_input)
+    relevant_mems = _memory_sys.find_relevant(user_input, owner)
     
     # Bundle context cleanly
     prompt_parts = []
@@ -154,7 +160,8 @@ def autonomous_loop(user_input: str, session_id: str = "default") -> dict:
         confidence="high",
         tags=["pending-confirmation"] if "[MEM_SUMMARY:" in final_answer else (["research-active"] if web_used else ["conversational"]),
         latency_ms=latency_ms,
-        session_id=session_id
+        session_id=session_id,
+        owner=owner
     )
 
     return {

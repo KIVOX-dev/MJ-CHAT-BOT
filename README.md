@@ -71,10 +71,16 @@ MJ_AI/
 ## 🚀 Getting Started
 
 ### 1. Environment Configurations
-Configure a `.env` file at the root of the workspace directory:
+Copy [`.env.example`](.env.example) to `.env` at the root of the workspace directory and fill in real values:
 ```env
 GROQ_API_KEY=gsk_your_api_key_here
 OPENROUTER_API_KEY=sk-or-v1-your_api_key_here
+MJ_API_TOKENS=change-me-to-a-random-token
+```
+`MJ_API_TOKENS` is required - every `/api/*` route rejects requests until it's set (see
+[`backend/auth.py`](backend/auth.py)). Generate a strong token with:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 ### 2. Backend Initialization
@@ -89,7 +95,9 @@ python backend/server.py
 *The API server will spin up on `http://127.0.0.1:8086`.*
 
 ### 3. Frontend Initialization
-In a separate terminal shell, navigate to the `frontend/` directory:
+In a separate terminal shell, navigate to the `frontend/` directory. Copy
+[`frontend/.env.example`](frontend/.env.example) to `frontend/.env` and set
+`VITE_MJ_API_TOKEN` to the **same token** you put in `MJ_API_TOKENS` above:
 ```bash
 # Install node packages
 npm install

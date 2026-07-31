@@ -9,8 +9,35 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 MONGO_URI = os.getenv("MONGO_URI", "")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MEMORY_FILE = os.path.join(BASE_DIR, "memory.json") 
+MEMORY_FILE = os.path.join(BASE_DIR, "memory.json")
 
 # Model Hyperparameters
 CONFIDENCE_THRESHOLD = 0.90 # Minimum confidence to trust internal model summary
 TRAIN_INTERVAL = 5           # Train model every N new memories
+
+
+def _parse_api_tokens(raw: str) -> dict:
+    """
+    Parses MJ_API_TOKENS as a comma-separated list of `token` or
+    `token:identity` pairs into {token: identity}. A bare token with no
+    ":identity" is assigned the identity "default", so a single-operator
+    deployment can set one token and get exactly today's single-owner
+    behavior back.
+    """
+    tokens = {}
+    for pair in raw.split(","):
+        pair = pair.strip()
+        if not pair:
+            continue
+        token, _, identity = pair.partition(":")
+        token = token.strip()
+        identity = identity.strip() or "default"
+        if token:
+            tokens[token] = identity
+    return tokens
+
+
+# Maps bearer token -> identity name. Every /api/* route requires a token
+# from this map (see auth.py). Configure via MJ_API_TOKENS, e.g.:
+#   MJ_API_TOKENS=changeme-token-1:alice,changeme-token-2:bob
+API_TOKENS = _parse_api_tokens(os.getenv("MJ_API_TOKENS", ""))
