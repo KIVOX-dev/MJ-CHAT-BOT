@@ -1,6 +1,14 @@
+# pyrefly: ignore [missing-import]
 from flask import Flask, request, jsonify, send_from_directory
 from main import autonomous_loop
 import os
+import sys
+
+
+# Add backend directory to the path so relative imports work correctly
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend"))
+
+from backend.app import app
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
