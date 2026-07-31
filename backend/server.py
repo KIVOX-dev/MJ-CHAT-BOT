@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from main import autonomous_loop
 import os
+import posixpath
 import json
 import uvicorn
 import asyncio
@@ -32,6 +33,43 @@ async def lifespan(app: FastAPI):
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+# Resolved once at startup (follows symlinks) so every containment check below
+# compares against the real on-disk root, not a symlinked alias of it.
+FRONTEND_DIR_REAL = os.path.realpath(FRONTEND_DIR)
+
+
+def _safe_static_path(requested_path: str):
+    """
+    Resolves `requested_path` against FRONTEND_DIR_REAL and returns the
+    absolute filesystem path only if it stays inside that directory.
+
+    Returns None for anything that would escape the static root: `..`
+    traversal, absolute paths/drive letters, or symlinks that resolve
+    outside the root (CWE-22).
+    """
+    if "\x00" in requested_path:
+        return None
+
+    # Anchor the path at a virtual root before normalizing: posixpath.normpath
+    # collapses ".." segments against that anchor instead of letting them
+    # climb past it, and os.path.isabs / drive-letter components in
+    # `requested_path` are neutralized because we never join them directly.
+    normalized = posixpath.normpath("/" + requested_path.replace("\\", "/")).lstrip("/")
+
+    candidate = os.path.realpath(os.path.join(FRONTEND_DIR_REAL, normalized))
+
+    try:
+        if os.path.commonpath([candidate, FRONTEND_DIR_REAL]) != FRONTEND_DIR_REAL:
+            return None
+    except ValueError:
+        # Raised on Windows when the two paths are on different drives -
+        # that's an escape by definition.
+        return None
+
+    if not os.path.isfile(candidate):
+        return None
+
+    return candidate
 
 app = FastAPI(lifespan=lifespan)
 
@@ -149,10 +187,10 @@ async def metrics():
 
 @app.get("/{path:path}")
 async def get_static(path: str):
-    file_path = os.path.join(FRONTEND_DIR, path)
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return JSONResponse({"error": "File not found"}, status_code=404)
+    file_path = _safe_static_path(path)
+    if file_path is None:
+        return JSONResponse({"error": "File not found"}, status_code=404)
+    return FileResponse(file_path)
 
 if __name__ == "__main__":
     import sys
