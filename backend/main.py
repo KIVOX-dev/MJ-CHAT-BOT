@@ -125,10 +125,19 @@ def autonomous_loop(user_input: str, session_id: str = "default", owner: str = "
 
     # 4. RedSage Security Audit Trigger
     if any(k in user_input.lower() for k in ["redsage", "security audit", "vulnerability scan"]):
-        from redsage import RedSageAgent
+        from redsage import RedSageAgent, RedSageRateLimitError
+        try:
+            RedSageAgent.check_rate_limit(owner)
+        except RedSageRateLimitError as e:
+            return {
+                "answer": f"⏳ {e}",
+                "source": "RedSage Specialist",
+                "latency_ms": round((time.time() - start_time) * 1000, 2)
+            }
+
         agent = RedSageAgent()
         report_md = agent.generate_audit_report()
-        
+
         # Save report as artifact for UI display
         report_filename = f"redsage_audit_{int(time.time())}.md"
         import os
