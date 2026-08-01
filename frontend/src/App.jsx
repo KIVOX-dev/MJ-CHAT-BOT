@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Brain, Sparkles, MessageSquareCode, PlusCircle, Compass, 
-  CheckCircle2, XCircle, Send, Award, Users, 
+import {
+  Brain, Sparkles, MessageSquareCode, PlusCircle, Compass,
+  CheckCircle2, XCircle, Send, Award, Users,
   TrendingUp, Activity, ExternalLink, ShieldCheck, AlertCircle,
-  Database, Cpu, Globe, BookOpen
+  Database, Cpu, Globe, BookOpen, Menu, X
 } from 'lucide-react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
@@ -69,6 +69,10 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [sessionId, setSessionId] = useState('default');
   const [sessions, setSessions] = useState(['default']);
+  // Sidebar is always visible on desktop; below the 900px breakpoint (see
+  // index.css) it becomes an off-canvas drawer toggled by this flag.
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const closeSidebar = () => setIsSidebarOpen(false);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -241,8 +245,22 @@ export default function App() {
         </div>
       )}
 
+      {/* Backdrop: only rendered (and visible, per index.css) below the
+          tablet/mobile breakpoint, to dismiss the off-canvas sidebar */}
+      {isSidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside
+        id="app-sidebar"
+        className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}
+        aria-label="Main navigation"
+      >
         <div>
           <div className="logo-area">
             <div className="logo-icon-box">
@@ -252,21 +270,30 @@ export default function App() {
               <h1 className="logo-text-title">MJ AI</h1>
               <p className="logo-text-subtitle">Autonomous Core</p>
             </div>
+            <button
+              onClick={closeSidebar}
+              className="sidebar-close-btn"
+              aria-label="Close navigation menu"
+            >
+              <X style={{ width: '18px', height: '18px' }} />
+            </button>
           </div>
 
           <div className="sidebar-section">
             <span className="section-label">Navigation</span>
             <div className="nav-links">
-              <button 
-                onClick={() => setActiveTab('chat')}
+              <button
+                onClick={() => { setActiveTab('chat'); closeSidebar(); }}
                 className={`nav-btn ${activeTab === 'chat' ? 'active-chat' : ''}`}
+                aria-current={activeTab === 'chat' ? 'page' : undefined}
               >
                 <MessageSquareCode style={{ width: '16px', height: '16px' }} />
                 <span>Core Interface</span>
               </button>
-              <button 
-                onClick={() => setActiveTab('dashboard')}
+              <button
+                onClick={() => { setActiveTab('dashboard'); closeSidebar(); }}
                 className={`nav-btn ${activeTab === 'dashboard' ? 'active-dash' : ''}`}
+                aria-current={activeTab === 'dashboard' ? 'page' : undefined}
               >
                 <TrendingUp style={{ width: '16px', height: '16px' }} />
                 <span>Intelligence Deck</span>
@@ -277,7 +304,7 @@ export default function App() {
           <div className="sidebar-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span className="section-label" style={{ margin: 0 }}>Research Sessions</span>
-              <button 
+              <button
                 onClick={() => {
                   const newSess = `session-${Date.now()}`;
                   setSessions(prev => [...prev, newSess]);
@@ -289,16 +316,18 @@ export default function App() {
                     source: "Core Logic",
                     confidence: "Perfect"
                   }]);
+                  closeSidebar();
                 }}
                 style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
                 title="New Session"
+                aria-label="Start a new research session"
               >
                 <PlusCircle style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
             <div className="session-box">
               {sessions.map(s => (
-                <button 
+                <button
                   key={s}
                   onClick={() => {
                     setSessionId(s);
@@ -308,8 +337,10 @@ export default function App() {
                       answer: `Switched context to **${s}**. Ready for research.`,
                       source: "Core Logic"
                     }]);
+                    closeSidebar();
                   }}
                   className={`session-btn ${sessionId === s ? 'active' : ''}`}
+                  aria-current={sessionId === s ? 'true' : undefined}
                 >
                   🚀 {s}
                 </button>
@@ -356,8 +387,19 @@ export default function App() {
               {/* Header Banner */}
               <div className="header-banner">
                 <div className="header-title-box">
-                  <div className="workspace-badge-pill">
-                    <span className="pulse-indicator" /> Active Workspace
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button
+                      onClick={() => setIsSidebarOpen(true)}
+                      className="sidebar-toggle-btn"
+                      aria-label="Open navigation menu"
+                      aria-expanded={isSidebarOpen}
+                      aria-controls="app-sidebar"
+                    >
+                      <Menu style={{ width: '18px', height: '18px' }} />
+                    </button>
+                    <div className="workspace-badge-pill">
+                      <span className="pulse-indicator" /> Active Workspace
+                    </div>
                   </div>
                   <h2 className="header-title">
                     Research Workspace <span style={{ color: '#22d3ee', fontFamily: 'monospace' }}>#{sessionId}</span>

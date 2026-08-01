@@ -1,6 +1,6 @@
 {
   "errors": [],
-  "generated_at": "2026-07-21T17:12:38Z",
+  "generated_at": "2026-07-21T18:05:38Z",
   "metrics": {
     ".\\backend\\app.py": {
       "CONFIDENCE.HIGH": 0,
@@ -11,7 +11,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 1,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 60,
+      "loc": 61,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -24,7 +24,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 9,
+      "loc": 12,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -106,6 +106,32 @@
       "nosec": 0,
       "skipped_tests": 0
     },
+    ".\\backend\\mcq_data\\generate_mcq.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 70,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    ".\\backend\\mcq_data\\test.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 10,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
     ".\\backend\\memory.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
@@ -115,7 +141,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 135,
+      "loc": 234,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -133,15 +159,15 @@
       "skipped_tests": 0
     },
     ".\\backend\\reasoning.py": {
-      "CONFIDENCE.HIGH": 3,
+      "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 3,
+      "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 178,
+      "loc": 168,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -210,6 +236,19 @@
       "nosec": 0,
       "skipped_tests": 0
     },
+    ".\\backend\\train_mcq.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 55,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
     ".\\backend\\web_tools.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
@@ -224,22 +263,22 @@
       "skipped_tests": 0
     },
     "_totals": {
-      "CONFIDENCE.HIGH": 7,
-      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.HIGH": 4,
+      "CONFIDENCE.LOW": 2,
       "CONFIDENCE.MEDIUM": 2,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 7,
-      "SEVERITY.MEDIUM": 2,
+      "SEVERITY.LOW": 4,
+      "SEVERITY.MEDIUM": 4,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 1261,
+      "loc": 1489,
       "nosec": 0,
       "skipped_tests": 0
     }
   },
   "results": [
     {
-      "code": "75     # RedSage Patch: Disable debug=True for security (CWE-94)\n76     app.run(host='0.0.0.0', port=5001, debug=False)\n",
+      "code": "78     # RedSage Patch: Disable debug=True for security (CWE-94)\n79     app.run(host='0.0.0.0', port=5001, debug=False)\n",
       "col_offset": 17,
       "end_col_offset": 26,
       "filename": ".\\backend\\app.py",
@@ -250,9 +289,9 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Possible binding to all interfaces.",
-      "line_number": 76,
+      "line_number": 79,
       "line_range": [
-        76
+        79
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html",
       "test_id": "B104",
@@ -300,64 +339,58 @@
       "test_name": "try_except_pass"
     },
     {
-      "code": "186                     return {\"text\": response.text, \"model\": \"Gemini 2.0 Flash\"}\n187                 except Exception: pass\n188 \n",
-      "col_offset": 16,
-      "end_col_offset": 38,
-      "filename": ".\\backend\\reasoning.py",
-      "issue_confidence": "HIGH",
+      "code": "33 \n34     response = requests.post(\n35         \"http://localhost:11434/api/generate\",\n36         json={\n37             \"model\": \"phi3\",   # \u26a1 fast model\n38             \"prompt\": prompt,\n39             \"stream\": False\n40         }\n41     )\n42 \n",
+      "col_offset": 15,
+      "end_col_offset": 5,
+      "filename": ".\\backend\\mcq_data\\generate_mcq.py",
+      "issue_confidence": "LOW",
       "issue_cwe": {
-        "id": 703,
-        "link": "https://cwe.mitre.org/data/definitions/703.html"
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
       },
-      "issue_severity": "LOW",
-      "issue_text": "Try, Except, Pass detected.",
-      "line_number": 187,
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 34,
       "line_range": [
-        187
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-      "test_id": "B110",
-      "test_name": "try_except_pass"
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
     },
     {
-      "code": "215                     return {\"text\": res.output.choices[0].message.content, \"model\": \"Qwen 3.5 Cloud\"}\n216             except Exception: pass\n217 \n",
-      "col_offset": 12,
-      "end_col_offset": 34,
-      "filename": ".\\backend\\reasoning.py",
-      "issue_confidence": "HIGH",
+      "code": "2 \n3 res = requests.post(\n4     \"http://localhost:11434/api/generate\",\n5     json={\n6         \"model\": \"deepseek-r1:8b\",\n7         \"prompt\": \"Say hello\",\n8         \"stream\": False\n9     }\n10 )\n11 \n",
+      "col_offset": 6,
+      "end_col_offset": 1,
+      "filename": ".\\backend\\mcq_data\\test.py",
+      "issue_confidence": "LOW",
       "issue_cwe": {
-        "id": 703,
-        "link": "https://cwe.mitre.org/data/definitions/703.html"
+        "id": 400,
+        "link": "https://cwe.mitre.org/data/definitions/400.html"
       },
-      "issue_severity": "LOW",
-      "issue_text": "Try, Except, Pass detected.",
-      "line_number": 216,
+      "issue_severity": "MEDIUM",
+      "issue_text": "Call to requests without timeout",
+      "line_number": 3,
       "line_range": [
-        216
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
-      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-      "test_id": "B110",
-      "test_name": "try_except_pass"
-    },
-    {
-      "code": "224                     return {\"text\": local_answer, \"model\": \"Local Ensemble\"}\n225             except Exception: pass\n226 \n",
-      "col_offset": 12,
-      "end_col_offset": 34,
-      "filename": ".\\backend\\reasoning.py",
-      "issue_confidence": "HIGH",
-      "issue_cwe": {
-        "id": 703,
-        "link": "https://cwe.mitre.org/data/definitions/703.html"
-      },
-      "issue_severity": "LOW",
-      "issue_text": "Try, Except, Pass detected.",
-      "line_number": 225,
-      "line_range": [
-        225
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html",
-      "test_id": "B110",
-      "test_name": "try_except_pass"
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b113_request_without_timeout.html",
+      "test_id": "B113",
+      "test_name": "request_without_timeout"
     },
     {
       "code": "1 import subprocess\n2 import json\n3 import os\n",
