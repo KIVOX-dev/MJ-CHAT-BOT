@@ -3,7 +3,7 @@ import os
 import pymongo
 import time
 import re
-from config import MONGO_URI, MEMORY_FILE
+from config import MONGO_URI, MEMORY_FILE, PINECONE_API_KEY, PINECONE_INDEX_HOST, PINECONE_NAMESPACE
 from typing import List, Dict, Any, Optional
 
 # Ownership model: every record has an "owner" identity string (the value
@@ -45,9 +45,27 @@ def _mongo_visible_filter(owner: str) -> Dict[str, Any]:
     return {"$or": [{"owner": owner}, {"owner": _SHARED_OWNER}, {"owner": {"$exists": False}}]}
 
 
+def _pinecone_visible_filter(owner: str) -> Dict[str, Any]:
+    """Metadata filter mirroring _mongo_visible_filter's semantics for search()."""
+    if owner == _SHARED_OWNER:
+        return {"owner": {"$eq": _SHARED_OWNER}}
+    return {"owner": {"$in": [owner, _SHARED_OWNER]}}
+
+
 class MemoryLayer:
     def __init__(self, uri: str = MONGO_URI):
         self.local_mode = False
+
+        self.pinecone_index = None
+        if PINECONE_API_KEY and PINECONE_INDEX_HOST:
+            try:
+                from pinecone import Pinecone
+                pc = Pinecone(api_key=PINECONE_API_KEY)
+                self.pinecone_index = pc.Index(host=PINECONE_INDEX_HOST)
+            except Exception as e:
+                print(f"[!] Pinecone init error: {e}. Semantic memory search disabled.")
+                self.pinecone_index = None
+
         if not uri:
             print("[!] Warning: MONGO_URI not found. Falling back to local memory.json operations.")
             self.client = None
@@ -66,6 +84,28 @@ class MemoryLayer:
             self.client = None
             self.collection = None
             self.local_mode = True
+
+    def _pinecone_upsert(self, entry_id: Optional[str], entry: Dict[str, Any]):
+        """Best-effort: mirrors a stored record into Pinecone for semantic
+        recall in find_relevant(). Never raises - a failure here shouldn't
+        break the write path that already succeeded against Mongo/local."""
+        if not self.pinecone_index or not entry_id:
+            return
+        try:
+            self.pinecone_index.upsert_records(
+                namespace=PINECONE_NAMESPACE,
+                records=[{
+                    "_id": str(entry_id),
+                    "text": entry["input"][:4000],
+                    "output": entry["output"][:4000],
+                    "owner": entry["owner"],
+                    "session_id": entry["session_id"],
+                    "tags": entry["tags"],
+                    "source": entry["source"],
+                }],
+            )
+        except Exception as e:
+            print(f"[!] Pinecone upsert error: {e}")
 
     def _read_local(self) -> List[Dict[str, Any]]:
         if not os.path.exists(MEMORY_FILE):
@@ -164,12 +204,15 @@ class MemoryLayer:
             new_entry["id"] = entry_id
             local_data.append(new_entry)
             self._write_local(local_data)
+            self._pinecone_upsert(entry_id, new_entry)
             return entry_id
 
         if not self.collection: return None
         try:
             result = self.collection.insert_one(new_entry)
-            return str(result.inserted_id)
+            entry_id = str(result.inserted_id)
+            self._pinecone_upsert(entry_id, new_entry)
+            return entry_id
         except Exception as e:
             print(f"Error storing memory: {e}")
             return None
@@ -292,6 +335,40 @@ class MemoryLayer:
             print(f"Error rejecting memory: {e}")
         return False
 
+    def _pinecone_find_relevant(self, query: str, owner: str) -> Optional[List[Dict[str, Any]]]:
+        """Semantic recall via Pinecone's integrated embedding model. Returns
+        None (never []) on failure so the caller knows to fall back to
+        keyword search instead of reporting "no relevant memories"."""
+        try:
+            response = self.pinecone_index.search(
+                namespace=PINECONE_NAMESPACE,
+                query={
+                    "top_k": 6,
+                    "inputs": {"text": query},
+                    "filter": _pinecone_visible_filter(owner),
+                },
+            )
+            hits = response.result.hits
+            results, verified_results = [], []
+            for hit in hits:
+                fields = hit.fields or {}
+                record = {
+                    "input": fields.get("text", ""),
+                    "output": fields.get("output", ""),
+                    "tags": fields.get("tags", []),
+                    "session_id": fields.get("session_id"),
+                    "owner": fields.get("owner"),
+                    "source": fields.get("source"),
+                }
+                if "verified-persistent" in record["tags"]:
+                    verified_results.append(record)
+                else:
+                    results.append(record)
+            return verified_results[:3] + results[:3]
+        except Exception as e:
+            print(f"[!] Pinecone search error: {e}. Falling back to keyword search.")
+            return None
+
     def find_relevant(self, query: str, owner: str = _SHARED_OWNER) -> List[Dict[str, Any]]:
         """
         Context lookup for prompt augmentation. Visible to `owner`: their own
@@ -299,6 +376,12 @@ class MemoryLayer:
         anything stored under the default identity) - never another
         identity's private conversation history.
         """
+        if self.pinecone_index:
+            semantic = self._pinecone_find_relevant(query, owner)
+            if semantic is not None:
+                return semantic
+            # Falls through to keyword search below on any Pinecone failure.
+
         if self.local_mode:
             local_data = self._read_local()
             results = []

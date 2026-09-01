@@ -8,6 +8,11 @@ DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "")
+# Host of the Pinecone index used for semantic memory search (see memory.py).
+# Connecting by host skips a name->host lookup on every request. Leave blank
+# to disable semantic search - find_relevant() falls back to keyword search.
+PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST", "")
+PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE", "mj-memory")
 MONGO_URI = os.getenv("MONGO_URI", "")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MEMORY_FILE = os.path.join(BASE_DIR, "memory.json")

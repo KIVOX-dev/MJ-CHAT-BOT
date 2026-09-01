@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 pymongo[srv]>=4.6,<5
+pinecone
 torch
 google-genai
 requests
