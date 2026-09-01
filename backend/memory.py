@@ -137,7 +137,7 @@ class MemoryLayer:
                 return data
             return [m for m in data if _is_visible_match(m, owner)]
 
-        if not self.collection: return []
+        if self.collection is None: return []
         try:
             mongo_filter = {} if owner is None else _mongo_visible_filter(owner)
             return list(self.collection.find(mongo_filter, {"_id": 0}))
@@ -156,7 +156,7 @@ class MemoryLayer:
             filtered.sort(key=lambda x: x.get("timestamp", 0))
             return filtered
 
-        if not self.collection: return []
+        if self.collection is None: return []
         try:
             query = {"session_id": session_id, **_mongo_private_filter(owner)}
             return list(self.collection.find(query, {"_id": 0}).sort("_id", 1))
@@ -175,7 +175,7 @@ class MemoryLayer:
                     sessions.add(sid)
             return list(sessions)
 
-        if not self.collection: return []
+        if self.collection is None: return []
         try:
             return self.collection.distinct("session_id", _mongo_private_filter(owner))
         except Exception as e:
@@ -207,7 +207,7 @@ class MemoryLayer:
             self._pinecone_upsert(entry_id, new_entry)
             return entry_id
 
-        if not self.collection: return None
+        if self.collection is None: return None
         try:
             result = self.collection.insert_one(new_entry)
             entry_id = str(result.inserted_id)
@@ -239,7 +239,7 @@ class MemoryLayer:
                 return True
             return False
 
-        if not self.collection: return False
+        if self.collection is None: return False
         try:
             from bson.objectid import ObjectId
             owner_filter = _mongo_private_filter(owner)
@@ -289,7 +289,7 @@ class MemoryLayer:
                     return True
             return False
 
-        if not self.collection: return False
+        if self.collection is None: return False
         try:
             query = {"session_id": session_id, "tags": "pending-confirmation", **_mongo_private_filter(owner)}
             latest_pending = self.collection.find_one(query, sort=[("_id", -1)])
@@ -324,7 +324,7 @@ class MemoryLayer:
                     return True
             return False
 
-        if not self.collection: return False
+        if self.collection is None: return False
         try:
             query = {"session_id": session_id, "tags": "pending-confirmation", **_mongo_private_filter(owner)}
             latest_pending = self.collection.find_one(query, sort=[("_id", -1)])
@@ -407,7 +407,7 @@ class MemoryLayer:
             # Limit like MongoDB does
             return verified_results[:3] + results[:3]
 
-        if not self.collection: return []
+        if self.collection is None: return []
         try:
             visible_filter = _mongo_visible_filter(owner)
             safe_pattern = re.escape(query)  # see local_mode branch above (CWE-1333 / injection)

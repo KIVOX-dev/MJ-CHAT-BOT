@@ -181,9 +181,12 @@ class ReasoningLayer:
                 "Authorization": f"Bearer {self.groq_key}",
                 "Content-Type": "application/json"
             }
-            # Use llama-3.3-70b-versatile or fallback to llama3-8b-8192
+            # llama-3.3-70b-versatile and llama3-8b-8192 have both been
+            # removed from Groq's catalog (confirmed via GET /v1/models) -
+            # gpt-oss-120b is the current largest general-purpose model
+            # Groq hosts, with gpt-oss-20b as the fallback.
             payload = {
-                "model": "llama-3.3-70b-versatile",
+                "model": "openai/gpt-oss-120b",
                 "messages": [{"role": m["role"], "content": m["content"]} for m in messages]
             }
             res = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=30)
@@ -191,18 +194,18 @@ class ReasoningLayer:
                 data = res.json()
                 choices = data.get("choices", [])
                 if choices:
-                    return {"text": choices[0]["message"]["content"], "model": "Groq Llama 3.3"}
+                    return {"text": choices[0]["message"]["content"], "model": "Groq GPT-OSS 120B"}
             else:
                 logging.error(f"Groq API Error: {res.status_code} - {res.text}")
-                # Try fallback model on Groq: llama3-8b-8192
-                logging.info("Attempting Groq fallback model llama3-8b-8192...")
-                payload["model"] = "llama3-8b-8192"
+                # Try fallback model on Groq: gpt-oss-20b
+                logging.info("Attempting Groq fallback model gpt-oss-20b...")
+                payload["model"] = "openai/gpt-oss-20b"
                 res_fb = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=30)
                 if res_fb.status_code == 200:
                     data = res_fb.json()
                     choices = data.get("choices", [])
                     if choices:
-                        return {"text": choices[0]["message"]["content"], "model": "Groq Llama 3 (8B)"}
+                        return {"text": choices[0]["message"]["content"], "model": "Groq GPT-OSS 20B"}
                 else:
                     return {"text": f"Groq API Error: {res_fb.status_code} - {res_fb.text}", "model": "Groq Error"}
         except Exception as e:
