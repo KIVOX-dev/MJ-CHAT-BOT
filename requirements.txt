@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-pymongo[srv]==3.12
+pymongo[srv]>=4.6,<5
 torch
 google-genai
 requests
