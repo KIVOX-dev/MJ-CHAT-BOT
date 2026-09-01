@@ -1,0 +1,5 @@
+backend/
+models/
+tools/
+requirements.txt
+bandit_report.json
