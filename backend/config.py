@@ -52,6 +52,12 @@ def _parse_api_tokens(raw: str) -> dict:
     return tokens
 
 
+# Comma-separated list of allowed frontend origins for CORS, e.g.
+#   MJ_CORS_ORIGINS=https://mj-chat-bot.vercel.app,https://remai-es66.vercel.app
+# Required once the frontend is deployed separately from the backend (see
+# server.py) - without it, browsers block cross-origin /api/* calls.
+MJ_CORS_ORIGINS = [o.strip() for o in os.getenv("MJ_CORS_ORIGINS", "").split(",") if o.strip()]
+
 # Maps bearer token -> identity name. Every /api/* route requires a token
 # from this map (see auth.py). Configure via MJ_API_TOKENS, e.g.:
 #   MJ_API_TOKENS=changeme-token-1:alice,changeme-token-2:bob

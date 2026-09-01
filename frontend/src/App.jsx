@@ -22,9 +22,14 @@ import confetti from 'canvas-confetti';
 // it and normalizes 401/503 (missing/invalid/unconfigured auth) into a
 // single readable Error instead of a confusing JSON-parse failure.
 const API_TOKEN = import.meta.env.VITE_MJ_API_TOKEN || '';
+// Base URL of the deployed backend (e.g. https://mj-chat-bot.onrender.com).
+// Leave unset for local dev, where vite.config.js proxies /api to
+// 127.0.0.1:8086 - a deployed frontend has no such proxy, so it must call
+// the backend's absolute URL instead of a same-origin relative path.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 async function apiFetch(path, options = {}) {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       ...(options.headers || {}),

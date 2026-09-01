@@ -2,6 +2,7 @@ import hmac
 
 from fastapi import Depends, FastAPI, Request, BackgroundTasks
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -17,7 +18,7 @@ import posixpath
 import uvicorn
 import asyncio
 from typing import Optional
-from config import TRAIN_INTERVAL, API_TOKENS, CHAT_RATE_LIMIT_AUTHENTICATED, CHAT_RATE_LIMIT_ANONYMOUS
+from config import TRAIN_INTERVAL, API_TOKENS, CHAT_RATE_LIMIT_AUTHENTICATED, CHAT_RATE_LIMIT_ANONYMOUS, MJ_CORS_ORIGINS
 
 
 class ChatRequest(BaseModel):
@@ -127,6 +128,15 @@ app = FastAPI(lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+if MJ_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=MJ_CORS_ORIGINS,
+        allow_credentials=False,  # auth is a bearer token, not cookies
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 
 @app.exception_handler(RequestValidationError)
